@@ -1,0 +1,199 @@
+/* Plain CSS that works on older iOS Safari (no flex gap, no inset, no :is). */
+:root {
+  --bg: #f6f5f0;
+  --fg: #17211b;
+  --muted: #5d6b62;
+  --card: #ffffff;
+  --line: #d7dbd3;
+  --accent: #0f5132;
+  --accent-fg: #ffffff;
+  --qibla: #b8860b;
+  --ok: #1e9e55;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1411;
+    --fg: #eef2ec;
+    --muted: #9aa89f;
+    --card: #18211c;
+    --line: #2c3a32;
+    --accent: #2f9e67;
+    --accent-fg: #ffffff;
+    --qibla: #e0b341;
+    --ok: #3ddc84;
+  }
+}
+
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f6f5f0;
+  background: var(--bg);
+  color: #17211b;
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 16px 24px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.top h1 {
+  margin: 4px 0 2px;
+  font-size: 26px;
+  letter-spacing: 0.5px;
+}
+.location {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 14px;
+  min-height: 1.3em;
+}
+
+/* ---- Compass ---- */
+.compass {
+  position: relative;
+  width: 82vw;
+  height: 82vw;
+  max-width: 340px;
+  max-height: 340px;
+  margin: 18px auto 8px;
+}
+.facing {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -11px;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-top: 18px solid var(--fg);
+  z-index: 2;
+}
+.dial {
+  width: 100%;
+  height: 100%;
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+  will-change: transform;
+}
+.dial svg { display: block; overflow: visible; }
+.dial-face { fill: var(--card); stroke: var(--line); stroke-width: 2; }
+.tick { stroke: var(--muted); stroke-width: 1; }
+.tick-major { stroke: var(--fg); stroke-width: 2; }
+.card {
+  fill: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.card-n { fill: #c0392b; }
+.arrow-shaft { stroke: var(--qibla); stroke-width: 7; stroke-linecap: round; }
+.arrow-head { fill: var(--qibla); }
+.kaaba rect { fill: #111; }
+.kaaba .kaaba-band { fill: #d4af37; }
+.hub { fill: var(--fg); }
+
+.aligned .arrow-shaft { stroke: var(--ok); }
+.aligned .arrow-head { fill: var(--ok); }
+.aligned .facing { border-top-color: var(--ok); }
+.aligned .dial-face { stroke: var(--ok); stroke-width: 5; }
+
+/* ---- Text ---- */
+.instruction {
+  margin: 16px 0 4px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.aligned .instruction { color: var(--ok); }
+.details {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--muted);
+}
+.hint {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* ---- Buttons ---- */
+.actions { margin: 12px 0; }
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin: 0 0 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+.btn:active { opacity: 0.7; }
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* ---- Map ---- */
+.map-panel { margin: 4px 0 12px; }
+.search {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  margin-bottom: 8px;
+}
+.search input {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  margin-right: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 16px; /* 16px stops iOS zooming into the field */
+  -webkit-appearance: none;
+}
+.search .btn { width: auto; margin: 0; }
+.map {
+  height: 320px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.small a { color: inherit; }
+footer { margin-top: 16px; }
