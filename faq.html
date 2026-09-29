@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Help &amp; FAQ – Qibla Direction</title>
+  <meta name="description" content="Fixes for common problems with the Qibla Direction app: compass, location, accuracy and privacy.">
+  <meta name="theme-color" content="#0f5132">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <main class="app faq">
+    <button class="theme-toggle js-theme-toggle" type="button">Dark</button>
+    <p class="back"><a href="./">&larr; Back to the compass</a></p>
+    <h1>Help &amp; FAQ</h1>
+    <p class="lead">Most problems can be fixed in a minute. Tap a question to see the answer.</p>
+
+    <h2>The compass</h2>
+
+    <details id="compass">
+      <summary>The arrow does not turn when I turn</summary>
+      <ul>
+        <li><b>iPhone (iOS 13 or later):</b> tap the green <b>Enable compass</b> button, then <b>Allow</b>.</li>
+        <li><b>You tapped &ldquo;Cancel&rdquo; or &ldquo;Don&rsquo;t Allow&rdquo;:</b> Safari will not ask again straight away.
+          Close Safari completely (swipe it away from the app switcher), open the page again and tap <b>Enable compass</b>.</li>
+        <li><b>iPhone with iOS 12:</b> go to <b>Settings &rsaquo; Safari &rsaquo; Motion &amp; Orientation Access</b>, turn it on, then reload the page.</li>
+        <li><b>Android:</b> use Chrome and make sure the page address starts with <b>https://</b>.</li>
+        <li><b>Laptop or desktop computer:</b> computers have no compass sensor, so the arrow cannot turn.
+          The arrow then shows the Qibla measured from North (the red <b>N</b>). Open the page on your phone instead.</li>
+      </ul>
+    </details>
+
+    <details id="accuracy">
+      <summary>The arrow seems wrong or jumps around</summary>
+      <p>Phone compasses sense the Earth&rsquo;s magnetic field, so nearby metal and magnets can throw them off.</p>
+      <ul>
+        <li><b>Take off magnetic cases</b>, MagSafe wallets and magnetic car mounts.</li>
+        <li><b>Move away</b> from laptops, speakers, fridges, metal desks and cars (step out of the car).</li>
+        <li><b>Calibrate:</b> move your phone slowly in a figure-of-8 a few times.</li>
+        <li><b>Hold the phone flat</b>, screen facing up, at waist height.</li>
+        <li><b>Basements, lifts and underground trains</b> are full of steel and wiring. Check the direction outside or near a window, then note a landmark.</li>
+        <li>If in doubt, check via other Qibla apps to verify.</li>
+      </ul>
+    </details>
+
+    <details id="different">
+      <summary>Another Qibla app shows a slightly different direction</summary>
+      <p>A difference of a few degrees is normal. It comes from the phone&rsquo;s compass, not the calculation:
+        this app uses the standard great-circle direction to the Kaaba, the same method most Qibla apps use.
+        Try the tips in &ldquo;The arrow seems wrong&rdquo; above and compare again in the same spot.
+        The app says &ldquo;Facing the Qibla&rdquo; when you are within 5&deg;.</p>
+    </details>
+
+    <h2>Your location</h2>
+
+    <details id="location">
+      <summary>It says location is blocked or denied</summary>
+      <ul>
+        <li><b>iPhone:</b> <b>Settings &rsaquo; Privacy &amp; Security &rsaquo; Location Services</b> must be on, then
+          <b>Safari Websites &rsaquo; While Using the App</b>. Go back to the page and tap <b>Update my location</b>.</li>
+        <li><b>Android (Chrome):</b> tap the icon to the left of the web address &rsaquo; <b>Permissions</b> &rsaquo; <b>Location</b> &rsaquo; <b>Allow</b>.</li>
+        <li><b>Laptop:</b> click the icon to the left of the web address &rsaquo; <b>Location</b> &rsaquo; <b>Allow</b>, then reload.
+          On Windows also check <b>Settings &rsaquo; Privacy &amp; security &rsaquo; Location</b>.</li>
+        <li><b>Don&rsquo;t want to share your location?</b> That&rsquo;s fine. Type your city in the box that appears instead.
+          For the Qibla, your city is accurate enough.</li>
+      </ul>
+    </details>
+
+    <details id="wrong-city">
+      <summary>It shows the wrong city</summary>
+      <p>When exact location is not allowed, the app guesses your city from your internet connection.
+        With a <b>VPN</b>, mobile data or some Wi-Fi networks that guess can be another city or even another country.
+        Turn off the VPN and tap <b>Update my location</b>, allow location access, or type your city in the box.</p>
+    </details>
+
+    <details id="update">
+      <summary>&ldquo;Update my location&rdquo; does not change anything</summary>
+      <p>The button shows what happened for a few seconds (for example &ldquo;Location updated&rdquo; or &ldquo;Approximate location&rdquo;).
+        If location is blocked, the phone refuses straight away. Allow location as explained above.
+        If you have not moved far, the direction stays the same. That is expected.</p>
+    </details>
+
+    <details id="travel">
+      <summary>I am travelling (car, train, plane)</summary>
+      <p>The app finds your location when it opens. On a long journey, tap <b>Update my location</b> now and then.
+        Inside vehicles the metal body upsets the compass, so check the direction when you stop.</p>
+    </details>
+
+    <h2>Using the app</h2>
+
+    <details id="map">
+      <summary>The map does not show</summary>
+      <p>The map is optional; you never need it to find the Qibla. It uses free OpenStreetMap maps, and because
+        this app is free, the map is shared by a limited number of people each day. When the daily limit is
+        reached, the map returns the next day. The compass and city search keep working.</p>
+    </details>
+
+    <details id="home-screen">
+      <summary>Can I install it like an app?</summary>
+      <p>Yes. <b>iPhone:</b> in Safari tap <b>Share</b> &rsaquo; <b>Add to Home Screen</b>.
+        <b>Android:</b> in Chrome tap <b>&#8942;</b> &rsaquo; <b>Add to Home screen</b>.
+        After your first visit the compass also works without internet.</p>
+    </details>
+
+    <details id="privacy">
+      <summary>Privacy: what happens to my data?</summary>
+      <ul>
+        <li>Your exact location <b>stays on your device</b>. It is only used to work out the direction and is remembered on your phone for next time.</li>
+        <li>No sign-up, no ads, no cookies, no personal data collected.</li>
+        <li>The app counts <b>anonymous daily totals</b> (how many devices opened the app and the map today) with the free
+          <a href="https://github.com/JasonLovesDoggo/abacus" target="_blank" rel="noopener">Abacus</a> counter. No location or personal details are sent.</li>
+        <li>If you type a city, that text is sent to <a href="https://nominatim.org/" target="_blank" rel="noopener">OpenStreetMap Nominatim</a> to find it.
+          If location is blocked, <a href="https://www.geojs.io/" target="_blank" rel="noopener">GeoJS</a> estimates your city from your internet connection.
+          Map pictures come from <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a>.</li>
+        <li>The app is open source: anyone can <a href="https://github.com/umairzia/Qibla-directional-app-" target="_blank" rel="noopener">check the code</a>.</li>
+      </ul>
+    </details>
+
+    <h2 id="contact">Still stuck? Report a problem</h2>
+    <p>Please check the answers above first. If they do not help, email us with:</p>
+    <ul>
+      <li>your phone model and iOS/Android version,</li>
+      <li>your browser (Safari, Chrome&hellip;) and the city you were in,</li>
+      <li>what happened and what you expected, with a screenshot if possible.</li>
+    </ul>
+    <p><a class="btn btn-primary js-feedback" href="#contact">Email a problem report</a></p>
+    <p class="small">Email: <span class="js-feedback-address">(address appears here)</span></p>
+    <p class="hint"><b>Please note:</b> spam, emails with phishing links and messages showing suspicious activity
+      are automatically blocked and filtered.</p>
+
+    <p class="back"><a href="./">&larr; Back to the compass</a></p>
+  </main>
+  <script src="js/contact.js"></script>
+  <script src="js/faq.js"></script>
+</body>
+</html>

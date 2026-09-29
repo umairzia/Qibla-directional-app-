@@ -3,7 +3,7 @@
  *
  * Location:  browser Geolocation API (GPS/Wi-Fi, free, on-device)
  *            -> fallback: approximate IP location from GeoJS (free, no key)
- *            -> manual: OpenStreetMap Nominatim search or tapping the map.
+ *            -> manual: type a city (OpenStreetMap Nominatim) or tap the map.
  * Heading:   DeviceOrientation events (iOS webkitCompassHeading, or
  *            absolute alpha on Android).
  * Map:       Leaflet + OpenStreetMap tiles (both FOSS), loaded on demand.
@@ -34,7 +34,10 @@
     btnLocate: $('btn-locate'),
     btnMap: $('btn-map'),
     mapPanel: $('map-panel'),
-    search: $('search'),
+    mapEl: $('map'),
+    mapLimit: $('map-limit'),
+    mapCaption: $('map-caption'),
+    search: $('manual'),
     searchInput: $('search-input')
   };
 
@@ -52,15 +55,25 @@
   var rafPending = false;
   var noCompassTimer = null;
   var map = null;
+  var mapChecking = false;
   var mapLayers = null;
 
   var isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  // Laptops and desktops have no compass sensor, so they need different help.
+  var isComputer = !isIOS && !isAndroid && !/Mobi/i.test(navigator.userAgent);
+  var locateButtonTimer = null;
 
   // ---------------------------------------------------------------- utils
 
   function setText(node, text) { node.textContent = text; }
   function show(node, visible) { node.style.display = visible ? '' : 'none'; }
+
+  // Link to the matching FAQ answer so people can troubleshoot on their own.
+  function helpLink(anchor) {
+    return ' <a href="faq.html#' + anchor + '">More help</a>';
+  }
 
   function setHint(node, html) {
     if (html) { node.innerHTML = html; show(node, true); } else { show(node, false); }
@@ -153,8 +166,8 @@
 
   function updateInstruction(heading) {
     var bearing = state.bearing;
-    var dirText = Math.round(bearing) + '° ' + Q.cardinal(bearing);
-    setText(el.details, 'Qibla: ' + dirText + ' from North · ' + formatDistance(state.distance) + ' to Makkah');
+    var dirText = Math.round(bearing) + '\u00B0 ' + Q.cardinal(bearing);
+    setText(el.details, 'Qibla: ' + dirText + ' from North \u00B7 ' + formatDistance(state.distance) + ' to Makkah');
 
     if (state.distance < 0.05) {
       setText(el.instruction, 'You are at the Kaaba');
@@ -167,9 +180,9 @@
       return;
     }
     var t = Q.turnInstruction(heading, bearing, ALIGN_TOLERANCE);
-    if (t.turn === 'aligned') setText(el.instruction, '✓ Facing the Qibla');
+    if (t.turn === 'aligned') setText(el.instruction, '\u2713 Facing the Qibla');
     else if (t.turn === 'around') setText(el.instruction, 'Turn around');
-    else setText(el.instruction, 'Turn ' + t.turn + ' ' + t.degrees + '°');
+    else setText(el.instruction, 'Turn ' + t.turn + ' ' + t.degrees + '\u00B0');
     setAligned(t.turn === 'aligned');
   }
 
@@ -194,32 +207,54 @@
     el.arrow.setAttribute('transform', 'rotate(' + state.bearing.toFixed(2) + ' 100 100)');
     show(el.arrow, true);
 
-    var where = loc.label || (loc.lat.toFixed(3) + '°, ' + loc.lng.toFixed(3) + '°');
+    var where = loc.label || (loc.lat.toFixed(3) + '\u00B0, ' + loc.lng.toFixed(3) + '\u00B0');
     var how = {
-      gps: 'your location' + (loc.accuracy ? ' (±' + formatDistance(loc.accuracy / 1000) + ')' : ''),
+      gps: 'your location' + (loc.accuracy ? ' (\u00B1' + formatDistance(loc.accuracy / 1000) + ')' : ''),
       saved: 'last known location',
       ip: 'approximate, from your network',
       search: 'searched place',
       map: 'picked on map'
     }[loc.source] || '';
-    setText(el.location, '📍 ' + where + (how ? ' — ' + how : ''));
+    setText(el.location, '\uD83D\uDCCD ' + where + (how ? ' \u2014 ' + how : ''));
 
     if (loc.source !== 'saved') saveLocation(loc);
     updateMap();
     requestRender();
   }
 
-  function locate() {
-    setText(el.btnLocate, 'Locating…');
+  function permissionHelp() {
+    if (isIOS) {
+      return 'To allow it on iPhone: <b>Settings \u203A Privacy \u203A Location Services \u203A Safari Websites \u203A While Using</b>, then tap \u201CUpdate my location\u201D.';
+    }
+    if (isAndroid) {
+      return 'To allow it: tap the icon to the left of the web address \u203A <b>Permissions</b> \u203A <b>Location</b> \u203A <b>Allow</b>, then tap \u201CUpdate my location\u201D.';
+    }
+    return 'Your browser will not ask again by itself. To allow it: click the icon to the left of the web address \u203A <b>Location</b> \u203A <b>Allow</b>, then reload the page. ' +
+      'On Windows, also check that <b>Settings \u203A Privacy &amp; security \u203A Location</b> is on.';
+  }
+
+  // Shows a short result on the button so every tap gives visible feedback.
+  function finishLocating(text) {
+    el.btnLocate.disabled = false;
+    setText(el.btnLocate, text);
+    clearTimeout(locateButtonTimer);
+    locateButtonTimer = setTimeout(function () { setText(el.btnLocate, 'Update my location'); }, 2500);
+  }
+
+  function locate(fresh) {
+    el.btnLocate.disabled = true;
+    clearTimeout(locateButtonTimer);
+    setText(el.btnLocate, 'Locating\u2026');
     if (!window.isSecureContext && location.protocol === 'http:' &&
         !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
       showHint('Location and compass need a secure page. Please open this app with <b>https://</b>.');
     }
-    if (!navigator.geolocation) { ipFallback('Your browser has no location support.'); return; }
+    if (!navigator.geolocation) { ipFallback('This browser cannot find your location.'); return; }
 
     navigator.geolocation.getCurrentPosition(function (pos) {
-      setText(el.btnLocate, 'Update my location');
+      finishLocating('\u2713 Location updated');
       showHint('');
+      show(el.search, false);
       setLocation({
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
@@ -228,36 +263,47 @@
       });
     }, function (err) {
       var msg = err && err.code === 1
-        ? 'Location permission was denied. To allow it on iPhone: <b>Settings › Privacy › Location Services › Safari Websites › While Using</b>, then tap “Update my location”.'
-        : 'Could not get a GPS fix.';
+        ? 'Location permission is blocked. ' + permissionHelp()
+        : 'Could not get your exact location.';
       ipFallback(msg);
-    }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 10 * 60 * 1000 });
+    }, {
+      enableHighAccuracy: false,
+      timeout: 15000,
+      // A tap on "Update my location" always asks for a new position.
+      maximumAge: fresh ? 0 : 10 * 60 * 1000
+    });
   }
 
   function ipFallback(reason) {
-    setText(el.btnLocate, 'Update my location');
-    if (state.loc && state.loc.source !== 'saved' && state.loc.source !== 'ip') {
-      showHint(reason);
+    // Without an exact location, offer a simple city search (no map needed).
+    show(el.search, true);
+    if (state.loc && (state.loc.source === 'gps' || state.loc.source === 'search' || state.loc.source === 'map')) {
+      finishLocating('Could not update');
+      showHint(reason + ' Still using your previous location.' + helpLink('location'));
       return; // keep a better location we already have
     }
     getJSON(IP_LOOKUP_URL).then(function (d) {
       var lat = parseFloat(d.latitude), lng = parseFloat(d.longitude);
       if (!Q.isValidCoord(lat, lng)) throw new Error('bad IP location');
       if (state.loc && state.loc.source === 'saved') {
-        showHint(reason + ' Using your last known location. You can also search or tap on the map.');
+        finishLocating('Using last location');
+        showHint(reason + ' Using your last known location.' + helpLink('location'));
         return;
       }
+      finishLocating('Approximate location');
       setLocation({
         lat: lat, lng: lng, source: 'ip',
         label: [d.city, d.country].filter(Boolean).join(', ') || null
       });
-      showHint(reason + ' Showing an approximate location, which is usually fine for the Qibla. For better accuracy, search your city on the map.');
+      showHint(reason + ' Until then the app uses an approximate location from your internet connection, which is usually close enough for the Qibla. ' +
+        'If it shows the wrong city (for example because of a VPN), type your city above.' + helpLink('wrong-city'));
     }).catch(function () {
+      finishLocating('Location not found');
       if (!state.loc) {
         setText(el.location, 'Location unknown');
         setText(el.instruction, 'Set your location');
       }
-      showHint(reason + ' Tap <b>Show map</b> to search for your city or tap your position on the map.');
+      showHint(reason + ' You can type your city above instead.' + helpLink('location'));
     });
   }
 
@@ -279,7 +325,7 @@
     state.lowAccuracy = typeof acc === 'number' && (acc < 0 || acc > 25);
     state.tilted = typeof e.beta === 'number' && Math.abs(e.beta) > 60;
     if (state.lowAccuracy) {
-      showCompassHint('Compass needs calibrating: move your phone in a figure-of-8, away from metal.');
+      showCompassHint('Compass needs calibrating: move your phone in a figure-of-8, away from metal.' + helpLink('accuracy'));
     } else if (state.tilted) {
       showCompassHint('Hold your phone flat (screen facing up) for an accurate reading.');
     } else {
@@ -299,19 +345,22 @@
     clearTimeout(noCompassTimer);
     noCompassTimer = setTimeout(function () {
       if (state.compassActive) return;
-      var msg = 'No compass detected. Face the direction shown on the dial (the red <b>N</b> is North), or use the map.';
+      var msg = isComputer
+        ? 'Laptops and desktop computers have no compass, so the arrow cannot turn with you. ' +
+          'It shows the Qibla measured from North (the red <b>N</b>). For an arrow that turns as you turn, open this page on your phone.'
+        : 'No compass reading yet. Move your phone in a figure-of-8 and hold it flat. Until it works, the arrow shows the Qibla measured from North (the red <b>N</b>).';
       if (isIOS && typeof DeviceOrientationEvent !== 'undefined' &&
           typeof DeviceOrientationEvent.requestPermission !== 'function') {
         // iOS 12.2 - 12.x hides motion sensors behind a Safari setting.
-        msg = 'Compass is off. On iPhone go to <b>Settings › Safari › Motion &amp; Orientation Access</b>, turn it on, then reload this page.';
+        msg = 'Compass is off. On iPhone go to <b>Settings \u203A Safari \u203A Motion &amp; Orientation Access</b>, turn it on, then reload this page.';
       }
-      showCompassHint(msg);
+      showCompassHint(msg + helpLink('compass'));
     }, NO_COMPASS_TIMEOUT_MS);
   }
 
   function setupCompass() {
     if (typeof DeviceOrientationEvent === 'undefined') {
-      showCompassHint('Your browser has no compass support. Face the direction shown on the dial.');
+      showCompassHint('This browser cannot read a compass. The arrow shows the Qibla measured from North (the red <b>N</b>).');
       return;
     }
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -322,7 +371,7 @@
           if (result === 'granted') {
             listenOrientation();
           } else {
-            showCompassHint('Compass access was denied. Close and reopen Safari on this page to be asked again.');
+            showCompassHint('Compass access was denied. Close and reopen Safari on this page to be asked again.' + helpLink('compass'));
           }
         }).catch(function () {
           showCompassHint('Could not enable the compass. Make sure the page is opened with https://.');
@@ -360,6 +409,7 @@
     map.on('click', function (e) {
       var ll = e.latlng.wrap();
       setLocation({ lat: ll.lat, lng: ll.lng, source: 'map' });
+      show(el.search, false);
       showHint('');
     });
     updateMap();
@@ -389,8 +439,24 @@
     setText(el.btnMap, open ? 'Hide map' : 'Show map');
     el.btnMap.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (!open) return;
-    loadLeaflet(function () {
-      if (!map) initMap(); else map.invalidateSize();
+    if (map) { map.invalidateSize(); return; }
+    if (mapChecking) return;
+    mapChecking = true;
+    // The free map is shared by everyone, so it has a daily limit.
+    var check = window.Usage ? window.Usage.checkMap() : Promise.resolve({ allowed: true });
+    check.then(function (result) {
+      mapChecking = false;
+      if (!result.allowed) {
+        show(el.mapEl, false);
+        show(el.mapCaption, false);
+        show(el.mapLimit, true);
+        return;
+      }
+      show(el.mapLimit, false);
+      show(el.mapEl, true);
+      loadLeaflet(function () {
+        if (!map) initMap(); else map.invalidateSize();
+      });
     });
   }
 
@@ -400,15 +466,16 @@
     if (!q) return;
     el.searchInput.blur();
     getJSON(SEARCH_URL + encodeURIComponent(q)).then(function (results) {
-      if (!results || !results.length) { showHint('No place found for “' + escapeHtml(q) + '”.'); return; }
+      if (!results || !results.length) { showHint('No place found for \u201C' + escapeHtml(q) + '\u201D.'); return; }
       var r = results[0];
       setLocation({
         lat: parseFloat(r.lat), lng: parseFloat(r.lon), source: 'search',
         label: String(r.display_name || q).split(',').slice(0, 2).join(',')
       });
+      show(el.search, false);
       showHint('');
     }).catch(function () {
-      showHint('Search failed. Check your internet connection, or tap your position on the map.');
+      showHint('Search failed. Check your internet connection and try again.');
     });
   }
 
@@ -416,15 +483,17 @@
 
   function init() {
     buildTicks();
-    el.btnLocate.addEventListener('click', locate, false);
+    el.btnLocate.addEventListener('click', function () { locate(true); }, false);
     el.btnMap.addEventListener('click', toggleMap, false);
     el.search.addEventListener('submit', searchPlace, false);
     window.addEventListener('orientationchange', function () { requestRender(); }, false);
 
     var saved = loadLocation();
     if (saved) { saved.source = 'saved'; setLocation(saved); }
-    locate();
+    locate(false);
     setupCompass();
+
+    if (window.Usage) window.Usage.countVisit();
 
     if ('serviceWorker' in navigator && window.isSecureContext) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* optional */ });
