@@ -5,23 +5,45 @@
   --muted: #5d6b62;
   --card: #ffffff;
   --line: #d7dbd3;
+  --dial: #ffffff;
   --accent: #0f5132;
   --accent-fg: #ffffff;
   --qibla: #b8860b;
   --ok: #1e9e55;
+  --north: #c0392b;
+  --tick: #5d6b62;
 }
+/* Dark green theme: used when the phone is in dark mode, unless the user
+   picked light with the toggle, or whenever the user picked dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e1411;
-    --fg: #eef2ec;
-    --muted: #9aa89f;
-    --card: #18211c;
-    --line: #2c3a32;
-    --accent: #2f9e67;
-    --accent-fg: #ffffff;
+  :root:not([data-theme="light"]) {
+    --bg: #0f4a2e;
+    --fg: #ffffff;
+    --muted: #b9d4c4;
+    --card: #133a26;
+    --line: #2d5d43;
+    --dial: #122c1f;
+    --accent: #e0b341;
+    --accent-fg: #1b1b1b;
     --qibla: #e0b341;
-    --ok: #3ddc84;
+    --ok: #6ff0a6;
+    --north: #ff6b5b;
+    --tick: #9fbfae;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #0f4a2e;
+  --fg: #ffffff;
+  --muted: #b9d4c4;
+  --card: #133a26;
+  --line: #2d5d43;
+  --dial: #122c1f;
+  --accent: #e0b341;
+  --accent-fg: #1b1b1b;
+  --qibla: #e0b341;
+  --ok: #6ff0a6;
+  --north: #ff6b5b;
+  --tick: #9fbfae;
 }
 
 * { -webkit-box-sizing: border-box; box-sizing: border-box; }
@@ -48,7 +70,8 @@ html, body {
 }
 
 .top h1 {
-  margin: 4px 0 2px;
+  margin: 0 0 4px;
+  line-height: 40px; /* leaves room for the theme button beside it */
   font-size: 26px;
   letter-spacing: 0.5px;
 }
@@ -88,8 +111,8 @@ html, body {
   will-change: transform;
 }
 .dial svg { display: block; overflow: visible; }
-.dial-face { fill: var(--card); stroke: var(--line); stroke-width: 2; }
-.tick { stroke: var(--muted); stroke-width: 1; }
+.dial-face { fill: var(--dial); stroke: var(--line); stroke-width: 2; }
+.tick { stroke: var(--tick); stroke-width: 1; }
 .tick-major { stroke: var(--fg); stroke-width: 2; }
 .card {
   fill: var(--muted);
@@ -97,7 +120,7 @@ html, body {
   font-weight: 700;
   text-anchor: middle;
 }
-.card-n { fill: #c0392b; }
+.card-n { fill: var(--north); }
 .arrow-shaft { stroke: var(--qibla); stroke-width: 7; stroke-linecap: round; }
 .arrow-head { fill: var(--qibla); }
 .kaaba rect { fill: #111; }
@@ -228,3 +251,24 @@ a.btn { text-decoration: none; line-height: 22px; }
 .stats-table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
 .stats-table th, .stats-table td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: left; }
 .stats-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---- Light / dark toggle ---- */
+.top { position: relative; }
+.theme-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.faq .theme-toggle { top: 4px; }

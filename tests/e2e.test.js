@@ -44,7 +44,8 @@ async function openApp(opts) {
     userAgent: opts.userAgent,
     serviceWorkers: 'block',
     permissions: opts.geo === false ? [] : ['geolocation'],
-    geolocation: opts.geo === false ? undefined : (opts.geo || NYC)
+    geolocation: opts.geo === false ? undefined : (opts.geo || NYC),
+    colorScheme: opts.colorScheme || 'light'
   });
   if (opts.initScript) await context.addInitScript(opts.initScript);
   await context.route('https://get.geojs.io/**', function (route) {
@@ -367,7 +368,7 @@ test('remembers the last location for the next visit', async function () {
 
 test('JavaScript is plain ES5 so it runs on older iPhones', function () {
   var acorn = require('acorn');
-  ['js/qibla.js', 'js/app.js', 'js/usage.js', 'js/contact.js', 'js/faq.js', 'sw.js'].forEach(function (f) {
+  ['js/qibla.js', 'js/app.js', 'js/usage.js', 'js/contact.js', 'js/faq.js', 'js/theme.js', 'sw.js'].forEach(function (f) {
     var src = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
     assert.doesNotThrow(function () { acorn.parse(src, { ecmaVersion: 5 }); }, f + ' is not ES5');
   });
@@ -475,5 +476,43 @@ test('stats page shows daily counts', async function () {
   await page.waitForFunction(function () { return document.querySelectorAll('#rows tr').length === 7; });
   assert.match(await page.textContent('#rows'), /\(today\)/);
   assert.deepEqual(app.errors, []);
+  await app.context.close();
+});
+
+function bodyBackground(page) {
+  return page.evaluate(function () { return getComputedStyle(document.body).backgroundColor; });
+}
+var DARK_GREEN = 'rgb(15, 74, 46)'; // #0f4a2e
+var LIGHT_BG = 'rgb(246, 245, 240)'; // #f6f5f0
+
+test('dark mode toggle switches to dark green and is remembered', async function () {
+  var app = await openApp({ userAgent: IPHONE_UA });
+  var page = app.page;
+  assert.equal(await bodyBackground(page), LIGHT_BG);
+  assert.match(await page.textContent('.js-theme-toggle'), /Dark/);
+  await page.click('.js-theme-toggle');
+  assert.equal(await bodyBackground(page), DARK_GREEN);
+  assert.match(await page.textContent('.js-theme-toggle'), /Light/);
+  assert.equal(await page.getAttribute('meta[name="theme-color"]', 'content'), '#0f4a2e');
+  // Remembered on reload and on the FAQ page.
+  await page.reload();
+  assert.equal(await bodyBackground(page), DARK_GREEN);
+  await page.goto(baseURL + 'faq.html');
+  assert.equal(await bodyBackground(page), DARK_GREEN);
+  await page.click('.js-theme-toggle');
+  assert.equal(await bodyBackground(page), LIGHT_BG);
+  assert.deepEqual(app.errors, []);
+  await app.context.close();
+});
+
+test('follows the phone dark mode until the user picks a theme', async function () {
+  var app = await openApp({ userAgent: IPHONE_UA, colorScheme: 'dark' });
+  var page = app.page;
+  assert.equal(await bodyBackground(page), DARK_GREEN);
+  assert.match(await page.textContent('.js-theme-toggle'), /Light/);
+  await page.click('.js-theme-toggle');
+  assert.equal(await bodyBackground(page), LIGHT_BG);
+  await page.reload();
+  assert.equal(await bodyBackground(page), LIGHT_BG);
   await app.context.close();
 });
