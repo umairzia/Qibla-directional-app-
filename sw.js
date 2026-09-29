@@ -1,6 +1,6 @@
 /* Minimal offline support: network-first for the app's own files, so the
    compass keeps working without signal after the first visit. */
-var CACHE = 'qibla-v1';
+var CACHE = 'qibla-v2';
 var SHELL = [
   './',
   'index.html',

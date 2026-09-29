@@ -197,3 +197,4 @@ html, body {
 }
 .small a { color: inherit; }
 footer { margin-top: 16px; }
+.btn:disabled { opacity: 0.6; }

@@ -9,6 +9,7 @@ var playwright = require('playwright');
 var createServer = require('./server');
 
 var NYC = { latitude: 40.7128, longitude: -74.0060, accuracy: 30 };
+var ANDROID_UA = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
 var IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 ' +
   '(KHTML, like Gecko) Version/12.1.2 Mobile/15E148 Safari/604.1';
 var PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
@@ -233,12 +234,19 @@ test('Android: uses absolute orientation events', async function () {
   await app.context.close();
 });
 
-test('no compass: shows a static direction and a helpful hint', async function () {
+test('laptop without compass: explains why the arrow cannot turn', async function () {
   var app = await openApp({});
   var page = app.page;
   await waitForText(page, 'instruction', /Face 58° ENE/);
-  await waitForText(page, 'compass-hint', /No compass detected/);
+  await waitForText(page, 'compass-hint', /Laptops and desktop computers have no compass/);
+  assert.doesNotMatch(await text(page, 'compass-hint'), /map/i); // the map is optional
   assert.equal(await dialRotation(page), 0);
+  await app.context.close();
+});
+
+test('phone that sends no compass reading gets calibration advice', async function () {
+  var app = await openApp({ userAgent: ANDROID_UA });
+  await waitForText(app.page, 'compass-hint', /No compass reading yet.*figure-of-8/);
   await app.context.close();
 });
 
@@ -253,7 +261,15 @@ test('location denied: falls back to approximate IP location', async function ()
   var page = app.page;
   await waitForText(page, 'location', /London, United Kingdom — approximate/);
   await waitForText(page, 'details', /Qibla: 119° ESE from North · 4,794 km/);
-  await waitForText(page, 'hint', /permission was denied/);
+  await waitForText(page, 'hint', /permission is blocked.*Safari Websites/);
+  assert.doesNotMatch(await text(page, 'hint'), /map/i);
+  // The city search is offered directly, without opening the map.
+  assert.equal(await page.isVisible('#manual'), true);
+  assert.equal(await page.isVisible('#map-panel'), false);
+  await page.fill('#search-input', 'Sydney');
+  await page.click('#manual button');
+  await waitForText(page, 'details', /Qibla: 277° W/);
+  assert.equal(await page.isVisible('#manual'), false);
   assert.deepEqual(app.errors, []);
   await app.context.close();
 });
@@ -262,7 +278,8 @@ test('location denied and offline: asks the user to set a location', async funct
   var app = await openApp({ geo: false, ipFails: true });
   var page = app.page;
   await waitForText(page, 'instruction', /Set your location/);
-  await waitForText(page, 'hint', /Show map/);
+  await waitForText(page, 'hint', /type your city/);
+  assert.equal(await page.isVisible('#manual'), true);
   assert.equal(await page.isVisible('#qibla-arrow'), false);
   await app.context.close();
 });
@@ -278,8 +295,13 @@ test('map: shows the path, search and tap-to-set location', async function () {
   assert.match(await page.textContent('.leaflet-control-attribution'), /OpenStreetMap/);
   assert.equal(await text(page, 'btn-map'), 'Hide map');
 
+  // Tap on the map to move the location.
+  var box0 = await page.locator('#map').boundingBox();
+  await page.locator('#map').tap({ position: { x: 20, y: box0.height - 40 } });
+  await waitForText(page, 'location', /picked on map/);
+  await page.evaluate(function () { document.getElementById('manual').style.display = ''; });
   await page.fill('#search-input', 'Sydney');
-  await page.click('#search button');
+  await page.click('#manual button');
   await waitForText(page, 'location', /Sydney, Council of the City of Sydney — searched place/);
   await waitForText(page, 'details', /Qibla: 277° W from North · 13,236 km/);
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'map.png'), fullPage: true });
@@ -291,6 +313,32 @@ test('map: shows the path, search and tap-to-set location', async function () {
 
   await page.click('#btn-map');
   assert.equal(await page.isVisible('#map-panel'), false);
+  assert.deepEqual(app.errors, []);
+  await app.context.close();
+});
+
+test('"Update my location" always gives visible feedback', async function () {
+  // Location allowed: button confirms the update.
+  var app = await openApp({ userAgent: IPHONE_UA });
+  var page = app.page;
+  await waitForText(page, 'details', /Qibla: 58°/);
+  await app.context.setGeolocation({ latitude: 51.5074, longitude: -0.1278 });
+  await page.click('#btn-locate');
+  await waitForText(page, 'btn-locate', /Location updated/);
+  await waitForText(page, 'details', /Qibla: 119°/);
+  await waitForText(page, 'btn-locate', /^Update my location$/);
+  await app.context.close();
+
+  // Location blocked on a laptop: button reports the result and the hint
+  // explains how to unblock it in a desktop browser.
+  app = await openApp({ geo: false });
+  page = app.page;
+  await waitForText(page, 'details', /Qibla: 119°/);
+  await waitForText(page, 'btn-locate', /^Update my location$/);
+  await page.click('#btn-locate');
+  await waitForText(page, 'btn-locate', /Approximate location|Location not found|Using last location/);
+  await waitForText(page, 'hint', /icon to the left of the web address/);
+  assert.match(await text(page, 'hint'), /Windows/);
   assert.deepEqual(app.errors, []);
   await app.context.close();
 });

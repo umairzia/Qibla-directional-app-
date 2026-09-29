@@ -50,6 +50,10 @@
     <p id="instruction" class="instruction" aria-live="polite">&nbsp;</p>
     <p id="details" class="details">&nbsp;</p>
     <p id="compass-hint" class="hint" style="display:none"></p>
+    <form id="manual" class="search" autocomplete="off" style="display:none">
+      <input id="search-input" type="search" placeholder="Type your city, e.g. Lahore" aria-label="Your city or address">
+      <button class="btn" type="submit">Set</button>
+    </form>
     <p id="hint" class="hint" style="display:none"></p>
 
     <div class="actions">
@@ -59,12 +63,8 @@
     </div>
 
     <section id="map-panel" class="map-panel" style="display:none">
-      <form id="search" class="search" autocomplete="off">
-        <input id="search-input" type="search" placeholder="Search a city or address" aria-label="Search a place">
-        <button class="btn" type="submit">Go</button>
-      </form>
       <div id="map" class="map"></div>
-      <p class="small">Tap the map to set your location manually. Green line = shortest path to the Kaaba.</p>
+      <p class="small">The green line is the shortest path to the Kaaba. Tap the map to move your location.</p>
     </section>
 
     <footer class="small">
