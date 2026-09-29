@@ -34,6 +34,9 @@
     btnLocate: $('btn-locate'),
     btnMap: $('btn-map'),
     mapPanel: $('map-panel'),
+    mapEl: $('map'),
+    mapLimit: $('map-limit'),
+    mapCaption: $('map-caption'),
     search: $('manual'),
     searchInput: $('search-input')
   };
@@ -52,6 +55,7 @@
   var rafPending = false;
   var noCompassTimer = null;
   var map = null;
+  var mapChecking = false;
   var mapLayers = null;
 
   var isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) ||
@@ -65,6 +69,11 @@
 
   function setText(node, text) { node.textContent = text; }
   function show(node, visible) { node.style.display = visible ? '' : 'none'; }
+
+  // Link to the matching FAQ answer so people can troubleshoot on their own.
+  function helpLink(anchor) {
+    return ' <a href="faq.html#' + anchor + '">More help</a>';
+  }
 
   function setHint(node, html) {
     if (html) { node.innerHTML = html; show(node, true); } else { show(node, false); }
@@ -270,7 +279,7 @@
     show(el.search, true);
     if (state.loc && (state.loc.source === 'gps' || state.loc.source === 'search' || state.loc.source === 'map')) {
       finishLocating('Could not update');
-      showHint(reason + ' Still using your previous location.');
+      showHint(reason + ' Still using your previous location.' + helpLink('location'));
       return; // keep a better location we already have
     }
     getJSON(IP_LOOKUP_URL).then(function (d) {
@@ -278,7 +287,7 @@
       if (!Q.isValidCoord(lat, lng)) throw new Error('bad IP location');
       if (state.loc && state.loc.source === 'saved') {
         finishLocating('Using last location');
-        showHint(reason + ' Using your last known location.');
+        showHint(reason + ' Using your last known location.' + helpLink('location'));
         return;
       }
       finishLocating('Approximate location');
@@ -287,14 +296,14 @@
         label: [d.city, d.country].filter(Boolean).join(', ') || null
       });
       showHint(reason + ' Until then the app uses an approximate location from your internet connection, which is usually close enough for the Qibla. ' +
-        'If it shows the wrong city (for example because of a VPN), type your city above.');
+        'If it shows the wrong city (for example because of a VPN), type your city above.' + helpLink('wrong-city'));
     }).catch(function () {
       finishLocating('Location not found');
       if (!state.loc) {
         setText(el.location, 'Location unknown');
         setText(el.instruction, 'Set your location');
       }
-      showHint(reason + ' You can type your city above instead.');
+      showHint(reason + ' You can type your city above instead.' + helpLink('location'));
     });
   }
 
@@ -316,7 +325,7 @@
     state.lowAccuracy = typeof acc === 'number' && (acc < 0 || acc > 25);
     state.tilted = typeof e.beta === 'number' && Math.abs(e.beta) > 60;
     if (state.lowAccuracy) {
-      showCompassHint('Compass needs calibrating: move your phone in a figure-of-8, away from metal.');
+      showCompassHint('Compass needs calibrating: move your phone in a figure-of-8, away from metal.' + helpLink('accuracy'));
     } else if (state.tilted) {
       showCompassHint('Hold your phone flat (screen facing up) for an accurate reading.');
     } else {
@@ -345,7 +354,7 @@
         // iOS 12.2 - 12.x hides motion sensors behind a Safari setting.
         msg = 'Compass is off. On iPhone go to <b>Settings \u203A Safari \u203A Motion &amp; Orientation Access</b>, turn it on, then reload this page.';
       }
-      showCompassHint(msg);
+      showCompassHint(msg + helpLink('compass'));
     }, NO_COMPASS_TIMEOUT_MS);
   }
 
@@ -362,7 +371,7 @@
           if (result === 'granted') {
             listenOrientation();
           } else {
-            showCompassHint('Compass access was denied. Close and reopen Safari on this page to be asked again.');
+            showCompassHint('Compass access was denied. Close and reopen Safari on this page to be asked again.' + helpLink('compass'));
           }
         }).catch(function () {
           showCompassHint('Could not enable the compass. Make sure the page is opened with https://.');
@@ -430,8 +439,24 @@
     setText(el.btnMap, open ? 'Hide map' : 'Show map');
     el.btnMap.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (!open) return;
-    loadLeaflet(function () {
-      if (!map) initMap(); else map.invalidateSize();
+    if (map) { map.invalidateSize(); return; }
+    if (mapChecking) return;
+    mapChecking = true;
+    // The free map is shared by everyone, so it has a daily limit.
+    var check = window.Usage ? window.Usage.checkMap() : Promise.resolve({ allowed: true });
+    check.then(function (result) {
+      mapChecking = false;
+      if (!result.allowed) {
+        show(el.mapEl, false);
+        show(el.mapCaption, false);
+        show(el.mapLimit, true);
+        return;
+      }
+      show(el.mapLimit, false);
+      show(el.mapEl, true);
+      loadLeaflet(function () {
+        if (!map) initMap(); else map.invalidateSize();
+      });
     });
   }
 
@@ -467,6 +492,8 @@
     if (saved) { saved.source = 'saved'; setLocation(saved); }
     locate(false);
     setupCompass();
+
+    if (window.Usage) window.Usage.countVisit();
 
     if ('serviceWorker' in navigator && window.isSecureContext) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* optional */ });

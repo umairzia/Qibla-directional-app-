@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Usage Stats – Qibla Direction</title>
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="app faq">
+    <p class="back"><a href="./">&larr; Back to the compass</a></p>
+    <h1>Daily usage</h1>
+    <p class="lead">Anonymous counts of devices per day (UTC). Each device is counted once a day.</p>
+    <table class="stats-table">
+      <thead><tr><th>Day (UTC)</th><th>Visitors</th><th>Map opens</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="3">Loading&hellip;</td></tr></tbody>
+    </table>
+    <p class="small" id="limit"></p>
+  </main>
+  <script src="js/usage.js"></script>
+  <script>
+    (function () {
+      var U = window.Usage, days = [], i;
+      for (i = 0; i < 7; i++) days.push(new Date(Date.now() - i * 86400000));
+      document.getElementById('limit').textContent =
+        'The map switches off for the rest of the day after ' + U.MAP_DAILY_LIMIT +
+        ' devices have opened it. Counts that cannot be loaded show a dash.';
+      function cell(kind, day) {
+        return U.getCount(kind, day).then(String, function () { return '–'; });
+      }
+      Promise.all(days.map(function (d) {
+        return Promise.all([cell('visits', d), cell('map', d)]);
+      })).then(function (results) {
+        var html = '';
+        days.forEach(function (d, i) {
+          var k = U.dayKey(d);
+          html += '<tr><td>' + k.slice(0, 4) + '-' + k.slice(4, 6) + '-' + k.slice(6) + (i === 0 ? ' (today)' : '') +
+            '</td><td class="num">' + results[i][0] + '</td><td class="num">' + results[i][1] + '</td></tr>';
+        });
+        document.getElementById('rows').innerHTML = html;
+      });
+    })();
+  </script>
+</body>
+</html>

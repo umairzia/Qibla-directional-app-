@@ -1,11 +1,15 @@
 /* Minimal offline support: network-first for the app's own files, so the
    compass keeps working without signal after the first visit. */
-var CACHE = 'qibla-v2';
+var CACHE = 'qibla-v3';
 var SHELL = [
   './',
   'index.html',
+  'faq.html',
   'css/style.css',
   'js/qibla.js',
+  'js/usage.js',
+  'js/contact.js',
+  'js/faq.js',
   'js/app.js',
   'manifest.webmanifest',
   'icons/icon-180.png',

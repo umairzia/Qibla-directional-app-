@@ -197,4 +197,34 @@ html, body {
 }
 .small a { color: inherit; }
 footer { margin-top: 16px; }
+footer p { margin: 0 0 8px; }
+a.btn { text-decoration: none; line-height: 22px; }
+.hint a, footer a { color: inherit; font-weight: 600; }
 .btn:disabled { opacity: 0.6; }
+
+/* ---- FAQ and stats pages ---- */
+.faq { text-align: left; line-height: 1.5; }
+.faq h1 { font-size: 26px; margin: 8px 0 4px; }
+.faq h2 { font-size: 18px; margin: 24px 0 8px; }
+.faq .lead { color: var(--muted); margin: 0 0 8px; }
+.faq .back { margin: 4px 0 12px; }
+.faq a { color: var(--accent); }
+.faq a.btn { color: var(--accent-fg); text-align: center; }
+.faq details {
+  margin: 0 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.faq summary {
+  padding: 14px 16px;
+  min-height: 48px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.faq details > p, .faq details > ul { margin: 0; padding: 0 16px 14px; }
+.faq details > ul { padding-left: 34px; }
+.faq li { margin-bottom: 6px; }
+.stats-table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+.stats-table th, .stats-table td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.stats-table td.num { text-align: right; font-variant-numeric: tabular-nums; }

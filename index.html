@@ -4,7 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Qibla Direction</title>
-  <meta name="description" content="Free, open source Qibla compass that points towards the Kaaba in Makkah.">
+  <meta name="description" content="Free Qibla compass that works in your phone's browser. No app to install, no sign-up. Points to the Kaaba in Makkah and turns as you turn.">
+
+  <!-- Link preview on WhatsApp, Facebook, X, Telegram, iMessage... -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Qibla Direction">
+  <meta property="og:title" content="Qibla Direction: free Qibla compass in your browser">
+  <meta property="og:description" content="Find the Qibla from anywhere. No app to install, no sign-up. The arrow turns as you turn.">
+  <meta property="og:url" content="https://umairzia.github.io/Qibla-directional-app-/">
+  <meta property="og:image" content="https://umairzia.github.io/Qibla-directional-app-/icons/share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A compass arrow pointing to the Kaaba">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Qibla Direction: free Qibla compass in your browser">
+  <meta name="twitter:description" content="Find the Qibla from anywhere. No app to install, no sign-up. The arrow turns as you turn.">
+  <meta name="twitter:image" content="https://umairzia.github.io/Qibla-directional-app-/icons/share.png">
   <meta name="theme-color" content="#0f5132">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -60,21 +75,44 @@
       <button id="btn-compass" class="btn btn-primary" type="button" style="display:none">Enable compass</button>
       <button id="btn-locate" class="btn" type="button">Update my location</button>
       <button id="btn-map" class="btn" type="button" aria-expanded="false">Show map</button>
+      <a class="btn" href="faq.html">Help &amp; FAQ</a>
     </div>
 
     <section id="map-panel" class="map-panel" style="display:none">
       <div id="map" class="map"></div>
-      <p class="small">The green line is the shortest path to the Kaaba. Tap the map to move your location.</p>
+      <p id="map-limit" class="hint" style="display:none">
+        The map has reached its limit for today. This app is free, so the map is shared
+        by a limited number of people each day. Please try again tomorrow.
+        The Qibla arrow and the city search still work as normal.
+      </p>
+      <p id="map-caption" class="small">The green line is the shortest path to the Kaaba. Tap the map to move your location.
+        The map is optional. It is free, so access depends on how many people use it each day.</p>
     </section>
 
     <footer class="small">
-      Hold your phone flat, away from metal and magnets.
-      Map &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.
-      Free &amp; open source.
+      <p>
+        Phone compasses can be thrown off by metal, magnets and phone cases. Hold your phone flat.
+        If in doubt, check via other Qibla apps to verify.
+      </p>
+      <p>
+        <b>Private:</b> your location stays on your device. No sign-up, no ads, no personal data collected.
+        <a href="faq.html#privacy">Details</a>
+      </p>
+      <p>
+        Something wrong? Check the <a href="faq.html">Help &amp; FAQ</a> first, then
+        <a class="js-feedback" href="faq.html#contact">report a problem</a>.
+        Spam, phishing links and suspicious messages are automatically blocked and filtered.
+      </p>
+      <p>
+        Map &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.
+        Free &amp; open source.
+      </p>
     </footer>
   </main>
 
   <script src="js/qibla.js"></script>
+  <script src="js/usage.js"></script>
+  <script src="js/contact.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
