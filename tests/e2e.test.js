@@ -372,7 +372,7 @@ test('remembers the last location for the next visit', async function () {
 
 test('JavaScript is plain ES5 so it runs on older iPhones', function () {
   var acorn = require('acorn');
-  ['js/qibla.js', 'js/app.js', 'js/usage.js', 'js/contact.js', 'js/faq.js', 'js/theme.js', 'sw.js'].forEach(function (f) {
+  ['js/qibla.js', 'js/app.js', 'js/usage.js', 'js/contact.js', 'js/faq.js', 'js/theme.js', 'js/press.js', 'sw.js'].forEach(function (f) {
     var src = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
     assert.doesNotThrow(function () { acorn.parse(src, { ecmaVersion: 5 }); }, f + ' is not ES5');
   });
@@ -529,5 +529,79 @@ test('follows the phone dark mode until the user picks a theme', async function 
   assert.equal(await bodyBackground(page), LIGHT_BG);
   await page.reload();
   assert.equal(await bodyBackground(page), LIGHT_BG);
+  await app.context.close();
+});
+
+// Real finger touch (not a mouse click) via the browser's touch input.
+async function touch(page, cdp, selector, moveBy) {
+  await page.locator(selector).scrollIntoViewIfNeeded();
+  var b = await page.locator(selector).boundingBox();
+  var x = b.x + b.width / 2, y = b.y + b.height / 2;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x, y: y }] });
+  var down = await page.getAttribute(selector, 'class');
+  if (moveBy) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x, y: y - moveBy }] });
+  var moved = await page.getAttribute(selector, 'class');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  return { down: down, moved: moved, up: await page.getAttribute(selector, 'class') };
+}
+
+test('the three main buttons show a yellow border when tapped', async function () {
+  var app = await openApp({ userAgent: IPHONE_UA });
+  var page = app.page;
+  await waitForText(page, 'details', /Qibla: 58°/);
+  var cdp = await app.context.newCDPSession(page);
+  var buttons = ['#btn-locate', '#btn-map'];
+  for (var i = 0; i < buttons.length; i++) {
+    var r = await touch(page, cdp, buttons[i]);
+    assert.match(r.down, /is-pressed/, buttons[i] + ' while finger is down');
+    assert.match(r.up, /is-pressed/, buttons[i] + ' right after the tap');
+    await page.waitForFunction(function (sel) {
+      return !/is-pressed/.test(document.querySelector(sel).className);
+    }, buttons[i], { timeout: 2000 });
+  }
+  // The border is a visible ring.
+  await page.evaluate(function () { document.getElementById('btn-locate').className += ' is-pressed'; });
+  assert.notEqual(await page.evaluate(function () {
+    return getComputedStyle(document.getElementById('btn-locate')).boxShadow;
+  }), 'none');
+  // Help & FAQ: border appears on touch (then the FAQ page opens).
+  var help = 'a.js-press[href="faq.html"]';
+  await page.locator(help).scrollIntoViewIfNeeded();
+  var hb = await page.locator(help).boundingBox();
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: hb.x + hb.width / 2, y: hb.y + hb.height / 2 }] });
+  assert.match(await page.getAttribute(help, 'class'), /is-pressed/);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+  assert.doesNotMatch(await page.getAttribute(help, 'class'), /is-pressed/);
+  assert.deepEqual(app.errors, []);
+  await app.context.close();
+});
+
+test('sliding off a button (scrolling) removes the border and does not press it', async function () {
+  var app = await openApp({ userAgent: IPHONE_UA });
+  var page = app.page;
+  await waitForText(page, 'details', /Qibla: 58°/);
+  var cdp = await app.context.newCDPSession(page);
+  var r = await touch(page, cdp, '#btn-map', 60);
+  assert.match(r.down, /is-pressed/);
+  assert.doesNotMatch(r.moved, /is-pressed/);
+  assert.equal(await page.isVisible('#map-panel'), false);
+  await app.context.close();
+});
+
+test('other buttons and footer links are left unchanged', async function () {
+  var app = await openApp({ userAgent: IPHONE_UA });
+  var page = app.page;
+  await waitForText(page, 'details', /Qibla: 58°/);
+  var cdp = await app.context.newCDPSession(page);
+  var r = await touch(page, cdp, '.js-theme-toggle');
+  assert.doesNotMatch(r.down + r.up, /is-pressed/);
+  await page.evaluate(function () { document.getElementById('manual').style.display = ''; });
+  r = await touch(page, cdp, '#manual button');
+  assert.doesNotMatch(r.down + r.up, /is-pressed/);
+  assert.equal(await page.locator('footer .js-press, footer .is-pressed').count(), 0);
+  // Only the three circled buttons are marked.
+  assert.equal(await page.locator('.js-press').count(), 3);
+  await page.goto(baseURL + 'faq.html');
+  assert.equal(await page.locator('.js-press').count(), 0);
   await app.context.close();
 });

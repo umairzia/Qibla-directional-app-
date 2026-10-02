@@ -30,6 +30,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/theme.js"></script>
+  <script src="js/press.js" defer></script>
 </head>
 <body>
   <main class="app">
@@ -75,9 +76,9 @@
 
     <div class="actions">
       <button id="btn-compass" class="btn btn-primary" type="button" style="display:none">Enable compass</button>
-      <button id="btn-locate" class="btn" type="button">Update my location</button>
-      <button id="btn-map" class="btn" type="button" aria-expanded="false">Show map</button>
-      <a class="btn" href="faq.html">Help &amp; FAQ</a>
+      <button id="btn-locate" class="btn js-press" type="button">Update my location</button>
+      <button id="btn-map" class="btn js-press" type="button" aria-expanded="false">Show map</button>
+      <a class="btn js-press" href="faq.html">Help &amp; FAQ</a>
     </div>
 
     <section id="map-panel" class="map-panel" style="display:none">

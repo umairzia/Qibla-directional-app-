@@ -12,6 +12,7 @@
   --ok: #1e9e55;
   --north: #c0392b;
   --tick: #5d6b62;
+  --press: #e0b341; /* gold: light yellow is too faint on a white button */
 }
 /* Dark green theme: used when the phone is in dark mode, unless the user
    picked light with the toggle, or whenever the user picked dark. */
@@ -29,6 +30,7 @@
     --ok: #6ff0a6;
     --north: #ff6b5b;
     --tick: #9fbfae;
+    --press: #ffe680;
   }
 }
 :root[data-theme="dark"] {
@@ -44,6 +46,7 @@
   --ok: #6ff0a6;
   --north: #ff6b5b;
   --tick: #9fbfae;
+  --press: #ffe680;
 }
 
 * { -webkit-box-sizing: border-box; box-sizing: border-box; }
@@ -176,6 +179,18 @@ html, body {
   cursor: pointer;
 }
 .btn:active { opacity: 0.7; }
+
+/* Pressed cue for the three main buttons (js/press.js): a yellow ring,
+   no layout shift. */
+.js-press {
+  -webkit-transition: border-color 0.12s, box-shadow 0.12s;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.js-press.is-pressed {
+  border-color: var(--press);
+  -webkit-box-shadow: 0 0 0 3px var(--press);
+  box-shadow: 0 0 0 3px var(--press);
+}
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
