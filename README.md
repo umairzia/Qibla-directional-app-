@@ -38,7 +38,7 @@ Other things it does:
 - **Help & FAQ** (`faq.html`): fixes for the most common problems (compass not turning, location blocked, wrong city/VPN, compass interference, map limit, privacy). Messages in the app link straight to the matching answer.
 - **Report a problem**: an email link with a ready-made report template. The address is put together by `js/contact.js`, so it is not written in the HTML where spam bots could find it.
 - **Daily counts** (`js/usage.js`): the app counts anonymous daily totals (devices that opened the app, and devices that opened the map) with the free, open-source [Abacus](https://github.com/JasonLovesDoggo/abacus) counter. No location or personal data is sent. See them at `stats.html`.
-- **Map limit**: the OpenStreetMap map switches off for the rest of the day (UTC) after `MAP_DAILY_LIMIT` (100) devices have opened it. Change the number in `js/usage.js`. If the counter cannot be reached, the map is allowed. The compass never depends on the counter.
+- **Map limit**: the OpenStreetMap map switches off for the rest of the day (UTC) after `MAP_DAILY_LIMIT` (300) devices have opened it. Change the number in `js/usage.js`. If the counter cannot be reached, the map is allowed. The compass never depends on the counter.
 - **Link preview**: `index.html` has Open Graph tags and `icons/share.png` (1200×630) for WhatsApp, Facebook, X and others.
 
 ## Using it on an iPhone

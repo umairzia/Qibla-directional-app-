@@ -19,7 +19,7 @@
 
   var COUNTER_URL = 'https://abacus.jasoncameron.dev';
   var NAMESPACE = 'umairzia-qibla-app';
-  var MAP_DAILY_LIMIT = 100;
+  var MAP_DAILY_LIMIT = 300;
   var TIMEOUT_MS = 4000;
 
   /** UTC day as YYYYMMDD, so everyone worldwide shares the same "day". */
