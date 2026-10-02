@@ -15,6 +15,10 @@ var IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_5_7 like Mac OS X) AppleW
 var PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 var SCREENSHOT_DIR = path.join(__dirname, '..', 'test-results');
 
+// The map's daily limit, read from the app so tests follow any change to it.
+var MAP_DAILY_LIMIT = Number(/MAP_DAILY_LIMIT = (\d+)/.exec(
+  fs.readFileSync(path.join(__dirname, '..', 'js', 'usage.js'), 'utf8'))[1]);
+
 var server, baseURL, browser;
 
 test.before(async function () {
@@ -375,7 +379,7 @@ test('JavaScript is plain ES5 so it runs on older iPhones', function () {
 });
 
 test('map is switched off after the daily limit and explains why', async function () {
-  var app = await openApp({ userAgent: IPHONE_UA, mapCount: 101 });
+  var app = await openApp({ userAgent: IPHONE_UA, mapCount: MAP_DAILY_LIMIT + 1 });
   var page = app.page;
   await waitForText(page, 'details', /Qibla: 58°/);
   await page.click('#btn-map');
@@ -389,6 +393,17 @@ test('map is switched off after the daily limit and explains why', async functio
   await iosHeading(page, 58);
   await waitForText(page, 'instruction', /Facing the Qibla/);
   assert.deepEqual(app.errors, []);
+  await app.context.close();
+});
+
+test('map still works for the last device within the daily limit', async function () {
+  assert.equal(MAP_DAILY_LIMIT, 300);
+  var app = await openApp({ userAgent: IPHONE_UA, mapCount: MAP_DAILY_LIMIT });
+  var page = app.page;
+  await waitForText(page, 'details', /Qibla: 58°/);
+  await page.click('#btn-map');
+  await page.waitForSelector('.leaflet-overlay-pane path');
+  assert.equal(await page.isVisible('#map-limit'), false);
   await app.context.close();
 });
 
